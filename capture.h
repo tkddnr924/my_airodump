@@ -14,7 +14,6 @@ private:
    bool Loop(PDU& call_pdu);
    std::string interface;
    std::vector<AP_info*> ap_vec;
-   std::vector<AP_info*>::iterator ap_iter;
    void PrintAP();
    bool ExistAP(AP_info* ap);
 };

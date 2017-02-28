@@ -1,4 +1,5 @@
 #include "capture.h"
+
 Capture::Capture(std::string interface)
 {
     this->interface = interface;
@@ -12,7 +13,6 @@ void Capture::Start()
 
     std::cout << "Start-----------------------------------------" << std::endl;
     sniffer.sniff_loop(make_sniffer_handler(this, &Capture::Loop));
-    std::cout << "END-----------------------------------------" << std::endl;
 }
 
 bool Capture::Loop(PDU& pdu)
@@ -21,23 +21,29 @@ bool Capture::Loop(PDU& pdu)
     try
     {
         const RadioTap& radiotap = pdu.rfind_pdu<RadioTap>();
-        const Dot11Beacon& beacon = pdu.rfind_pdu<Dot11Beacon>();
+        const Dot11ManagementFrame& dotmgf = pdu.rfind_pdu<Dot11ManagementFrame>();
 
-        if (!beacon.from_ds() && !beacon.to_ds())
+        if(!dotmgf.from_ds() && !dotmgf.to_ds())
         {
             if(radiotap.present() & RadioTap::DBM_SIGNAL)
             {
                 ap_info->SetPwr((int)radiotap.dbm_signal());
             }
+            std::cout << (int)dotmgf.subtype() << std::endl;
 
-            ap_info->SetBssid(beacon.addr2().to_string());      // setting bssid
-            ap_info->SetChannel(beacon.ds_parameter_set());     // setting channel
-            ap_info->SetEncrypt(beacon);                        // setting Encrypt, Cipher
-            ap_info->SetAuth(beacon);                           // setting Auth
-            ap_info->SetEssid(beacon.ssid());                   // setting essid
-            ap_info->SetMB(beacon);                             // setting MB
+            switch (dotmgf.subtype()) {
+            case Dot11ManagementFrame::BEACON:
+                ap_info->SetBssid(dotmgf);                  // setting bssid
+                ap_info->SetChannel(dotmgf);                // setting channel
+                ap_info->SetEssid(dotmgf);                  // setting essid
+                ap_info->SetEncrypt(dotmgf);                // setting Encrypt, Cipher
+                ap_info->SetAuth(dotmgf);                   // setting Auth
+                ap_info->SetMB(dotmgf);                     // setting MB
+                break;
+            default:
+                break;
+            }
         }
-
     }
     catch(pdu_not_found)
     {
@@ -70,7 +76,7 @@ bool Capture::ExistAP(AP_info* ap)
 void Capture::PrintAP()
 {
     std::system("clear");
-    std:: cout << "BSSID\t\t\t PWR\t BEACONS\t CHANNEL\t MB\t ENC\t CIPHER\t AUTH\t ESSID" << std::endl;
+    std:: cout << "BSSID\t\t\t PWR\t BEACONS\t CHANNEL\t MB\t ENC\t CIPHER\t AUTH\t ESSID\n" << std::endl;
     for(AP_info* ap : this->ap_vec)
     {
         if(ap->GetEssid() == "")

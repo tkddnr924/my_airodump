@@ -12,7 +12,6 @@ int main(int argc, char *argv[])
     }
 
     Capture* capture = new Capture(argv[1]);
-
     capture->Start();
 
     return 0;

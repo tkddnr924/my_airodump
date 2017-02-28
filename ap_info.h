@@ -10,13 +10,13 @@ class AP_info
 public:
     AP_info();
 
-    void SetBssid(std::string bssid);       // bssid
-    void SetChannel(uint8_t channel);       // channel
+    void SetBssid(const Dot11ManagementFrame& mgf);       // bssid
+    void SetChannel(const Dot11ManagementFrame& mgf);       // channel
     void SetPwr(int pwr);                   // pwr
-    void SetEncrypt(Dot11Beacon beacon);    // enc, cipher
-    void SetAuth(Dot11Beacon beacon);       // auth
-    void SetEssid(std::string essid);       // essid
-    void SetMB(Dot11Beacon beacon);
+    void SetEncrypt(const Dot11ManagementFrame& mgf);    // enc, cipher
+    void SetAuth(const Dot11ManagementFrame& mgf);       // auth
+    void SetEssid(const Dot11ManagementFrame& mgf);       // essid
+    void SetMB(const Dot11ManagementFrame& mgf);
 
     std::string GetBssid();
     uint8_t GetChannel();

@@ -2,17 +2,20 @@
 
 AP_info::AP_info()
 {
-    this->cnt = 1;
+    this->cnt = 0;
 }
 
 // Set Method
-void AP_info::SetBssid(std::string bssid)
+void AP_info::SetBssid(const Dot11ManagementFrame& mgf)
 {
-    this->bssid = bssid;
+    const Dot11Beacon& beacon = mgf.rfind_pdu<Dot11Beacon>();
+    this->bssid = beacon.addr2().to_string();
 }
 
-void AP_info::SetChannel(uint8_t channel)
+void AP_info::SetChannel(const Dot11ManagementFrame& mgf)
 {
+    const Dot11Beacon& beacon = mgf.rfind_pdu<Dot11Beacon>();
+    uint channel = beacon.ds_parameter_set();
     this->channel = channel;
 }
 
@@ -21,10 +24,11 @@ void AP_info::SetPwr(int pwr)
     this->pwr = pwr;
 }
 
-void AP_info::SetEncrypt(Dot11Beacon beacon)
+void AP_info::SetEncrypt(const Dot11ManagementFrame& mgf)
 {
     try
     {
+        const Dot11Beacon& beacon = mgf.rfind_pdu<Dot11Beacon>();
         RSNInformation rsn = beacon.rsn_information();
 
         switch (rsn.pairwise_cyphers()[0]) {
@@ -54,10 +58,11 @@ void AP_info::SetEncrypt(Dot11Beacon beacon)
     }
 }
 
-void AP_info::SetAuth(Dot11Beacon beacon)
+void AP_info::SetAuth(const Dot11ManagementFrame& mgf)
 {
     try
     {
+        const Dot11Beacon& beacon = mgf.rfind_pdu<Dot11Beacon>();
         RSNInformation rsn = beacon.rsn_information();
 
         auto akm = rsn.akm_cyphers();
@@ -80,21 +85,28 @@ void AP_info::SetAuth(Dot11Beacon beacon)
     }
 }
 
-void AP_info::SetEssid(std::string essid)
+void AP_info::SetEssid(const Dot11ManagementFrame& mgf)
 {
+    const Dot11Beacon& beacon = mgf.rfind_pdu<Dot11Beacon>();
+    std::string essid = beacon.ssid();
     this->essid = essid;
 }
 
-void AP_info::SetMB(Dot11Beacon beacon)
+void AP_info::SetMB(const Dot11ManagementFrame& mgf)
 {
-    float sr = beacon.supported_rates().back();
-    float esr = beacon.extended_supported_rates().back();
-    this->mb = (sr > esr) ? std::to_string((int)sr) : std::to_string((int)esr);
+    try{
+        const Dot11Beacon& beacon = mgf.rfind_pdu<Dot11Beacon>();
+        float sr = beacon.supported_rates().back();
+        float esr = beacon.extended_supported_rates().back();
+        this->mb = (sr > esr) ? std::to_string((int)sr) : std::to_string((int)esr);
 
-    if(!beacon.capabilities().qos())
-    {
-        this->mb += "e";
+        if(!beacon.capabilities().qos())
+        {
+            this->mb += "e";
+        }
     }
+    catch(option_not_found)
+    {}
 }
 
 // Get Method
